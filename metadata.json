@@ -1,0 +1,6 @@
+{
+  "name": "ALAS Véhicule",
+  "description": "Location et vente de véhicules toutes marques à Ouagadougou, Burkina Faso. Service premium, flotte de confiance, véhicules révisés.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
