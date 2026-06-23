@@ -224,6 +224,32 @@ export default function App() {
     message: ''
   });
 
+  // Mobile-compatible Date dropdown states
+  const [startDay, setStartDay] = useState('');
+  const [startMonth, setStartMonth] = useState('');
+  const [startYear, setStartYear] = useState('');
+
+  const [endDay, setEndDay] = useState('');
+  const [endMonth, setEndMonth] = useState('');
+  const [endYear, setEndYear] = useState('');
+
+  // Sync start and end select components to bookingForm dates
+  useEffect(() => {
+    if (startDay && startMonth && startYear) {
+      setBookingForm(prev => ({ ...prev, startDate: `${startYear}-${startMonth}-${startDay}` }));
+    } else {
+      setBookingForm(prev => ({ ...prev, startDate: '' }));
+    }
+  }, [startDay, startMonth, startYear]);
+
+  useEffect(() => {
+    if (endDay && endMonth && endYear) {
+      setBookingForm(prev => ({ ...prev, endDate: `${endYear}-${endMonth}-${endDay}` }));
+    } else {
+      setBookingForm(prev => ({ ...prev, endDate: '' }));
+    }
+  }, [endDay, endMonth, endYear]);
+
   // Submitted / Success Modal State
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -233,9 +259,9 @@ export default function App() {
 
   // Calculate duration and price total when Dates or Vehicle changes
   useEffect(() => {
-    if (bookingForm.startDate && bookingForm.endDate) {
-      const start = new Date(bookingForm.startDate);
-      const end = new Date(bookingForm.endDate);
+    if (startDay && startMonth && startYear && endDay && endMonth && endYear) {
+      const start = new Date(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
+      const end = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
       
       // Calculate difference in milliseconds
       const differenceMs = end.getTime() - start.getTime();
@@ -263,7 +289,7 @@ export default function App() {
       setDurationInDays(0);
       setEstimatedTotalPrice(0);
     }
-  }, [bookingForm.startDate, bookingForm.endDate, bookingForm.vehicleId, bookingForm.driverType]);
+  }, [startDay, startMonth, startYear, endDay, endMonth, endYear, bookingForm.vehicleId, bookingForm.driverType]);
 
   // Track scroll position for sticky header
   useEffect(() => {
@@ -1116,32 +1142,112 @@ Nouvelle demande de location :
 
                 {/* Start Date */}
                 <div id="form-group-startdate">
-                  <label htmlFor="startDate" className="block text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
+                  <label className="block text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
                     Date de début de location *
                   </label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    required
-                    value={bookingForm.startDate}
-                    onChange={(e) => setBookingForm({...bookingForm, startDate: e.target.value})}
-                    className="w-full bg-brand-charcoal border border-white/10 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-red transition-colors"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      id="debut-jour"
+                      required
+                      value={startDay}
+                      onChange={(e) => setStartDay(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Jour</option>
+                      {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      id="debut-mois"
+                      required
+                      value={startMonth}
+                      onChange={(e) => setStartMonth(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Mois</option>
+                      <option value="01">Janvier</option>
+                      <option value="02">Février</option>
+                      <option value="03">Mars</option>
+                      <option value="04">Avril</option>
+                      <option value="05">Mai</option>
+                      <option value="06">Juin</option>
+                      <option value="07">Juillet</option>
+                      <option value="08">Août</option>
+                      <option value="09">Septembre</option>
+                      <option value="10">Octobre</option>
+                      <option value="11">Novembre</option>
+                      <option value="12">Décembre</option>
+                    </select>
+
+                    <select
+                      id="debut-annee"
+                      required
+                      value={startYear}
+                      onChange={(e) => setStartYear(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Année</option>
+                      <option value="2026">2026</option>
+                      <option value="2027">2027</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* End Date */}
                 <div id="form-group-enddate">
-                  <label htmlFor="endDate" className="block text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
+                  <label className="block text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
                     Date de fin de location *
                   </label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    required
-                    value={bookingForm.endDate}
-                    onChange={(e) => setBookingForm({...bookingForm, endDate: e.target.value})}
-                    className="w-full bg-brand-charcoal border border-white/10 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-red transition-colors"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      id="fin-jour"
+                      required
+                      value={endDay}
+                      onChange={(e) => setEndDay(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Jour</option>
+                      {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      id="fin-mois"
+                      required
+                      value={endMonth}
+                      onChange={(e) => setEndMonth(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Mois</option>
+                      <option value="01">Janvier</option>
+                      <option value="02">Février</option>
+                      <option value="03">Mars</option>
+                      <option value="04">Avril</option>
+                      <option value="05">Mai</option>
+                      <option value="06">Juin</option>
+                      <option value="07">Juillet</option>
+                      <option value="08">Août</option>
+                      <option value="09">Septembre</option>
+                      <option value="10">Octobre</option>
+                      <option value="11">Novembre</option>
+                      <option value="12">Décembre</option>
+                    </select>
+
+                    <select
+                      id="fin-annee"
+                      required
+                      value={endYear}
+                      onChange={(e) => setEndYear(e.target.value)}
+                      className="flex-1 bg-brand-charcoal border border-brand-red/50 focus:border-brand-red text-white rounded-md px-3 py-3 text-sm focus:outline-none transition-colors"
+                    >
+                      <option value="">Année</option>
+                      <option value="2026">2026</option>
+                      <option value="2027">2027</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Pickup Location selection dropdown */}
@@ -1636,11 +1742,11 @@ Nouvelle demande de location :
                 <div className="bg-brand-dark p-4 rounded-none space-y-2 text-xs border border-white/5">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Date de départ :</span>
-                    <span className="text-white">{bookingForm.startDate}</span>
+                    <span className="text-white">{startDay}/{startMonth}/{startYear}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Date de retour :</span>
-                    <span className="text-white">{bookingForm.endDate}</span>
+                    <span className="text-white">{endDay}/{endMonth}/{endYear}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Durée réelle :</span>
@@ -1670,6 +1776,13 @@ Nouvelle demande de location :
                 <button
                   onClick={() => {
                     setIsSubmitted(false);
+                    // Reset dropdown date states
+                    setStartDay('');
+                    setStartMonth('');
+                    setStartYear('');
+                    setEndDay('');
+                    setEndMonth('');
+                    setEndYear('');
                     // Reset form details safely
                     setBookingForm({
                       fullName: '',
