@@ -235,18 +235,26 @@ export default function App() {
 
   // Sync start and end select components to bookingForm dates
   useEffect(() => {
-    if (startDay && startMonth && startYear) {
-      setBookingForm(prev => ({ ...prev, startDate: `${startYear}-${startMonth}-${startDay}` }));
-    } else {
-      setBookingForm(prev => ({ ...prev, startDate: '' }));
+    try {
+      if (startDay && startMonth && startYear) {
+        setBookingForm(prev => ({ ...prev, startDate: `${startYear}-${startMonth}-${startDay}` }));
+      } else {
+        setBookingForm(prev => ({ ...prev, startDate: '' }));
+      }
+    } catch (e) {
+      console.error('Error syncing start date:', e);
     }
   }, [startDay, startMonth, startYear]);
 
   useEffect(() => {
-    if (endDay && endMonth && endYear) {
-      setBookingForm(prev => ({ ...prev, endDate: `${endYear}-${endMonth}-${endDay}` }));
-    } else {
-      setBookingForm(prev => ({ ...prev, endDate: '' }));
+    try {
+      if (endDay && endMonth && endYear) {
+        setBookingForm(prev => ({ ...prev, endDate: `${endYear}-${endMonth}-${endDay}` }));
+      } else {
+        setBookingForm(prev => ({ ...prev, endDate: '' }));
+      }
+    } catch (e) {
+      console.error('Error syncing end date:', e);
     }
   }, [endDay, endMonth, endYear]);
 
@@ -259,33 +267,56 @@ export default function App() {
 
   // Calculate duration and price total when Dates or Vehicle changes
   useEffect(() => {
-    if (startDay && startMonth && startYear && endDay && endMonth && endYear) {
-      const start = new Date(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
-      const end = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
-      
-      // Calculate difference in milliseconds
-      const differenceMs = end.getTime() - start.getTime();
-      
-      if (differenceMs >= 0) {
-        // Convert to days (include minimum 1 day if dates are same day)
-        const days = Math.max(1, Math.ceil(differenceMs / (1000 * 60 * 60 * 24)));
-        setDurationInDays(days);
+    try {
+      if (startDay && startMonth && startYear && endDay && endMonth && endYear) {
+        const yearStart = parseInt(startYear, 10);
+        const monthStart = parseInt(startMonth, 10) - 1;
+        const dayStart = parseInt(startDay, 10);
+
+        const yearEnd = parseInt(endYear, 10);
+        const monthEnd = parseInt(endMonth, 10) - 1;
+        const dayEnd = parseInt(endDay, 10);
+
+        if (
+          isNaN(yearStart) || isNaN(monthStart) || isNaN(dayStart) ||
+          isNaN(yearEnd) || isNaN(monthEnd) || isNaN(dayEnd)
+        ) {
+          setDurationInDays(0);
+          setEstimatedTotalPrice(0);
+          return;
+        }
+
+        const start = new Date(yearStart, monthStart, dayStart);
+        const end = new Date(yearEnd, monthEnd, dayEnd);
         
-        // Find selected vehicle price
-        const selectedVehicle = VEHICLES_DATA.find(v => v.id === bookingForm.vehicleId);
-        if (selectedVehicle) {
-          let basePrice = selectedVehicle.price * days;
-          // Small extra if with driver
-          if (bookingForm.driverType === 'Avec chauffeur') {
-            basePrice += 10000 * days; // Extra 10,000 FCFA/day for professional drivers in Ouaga
+        // Calculate difference in milliseconds
+        const differenceMs = end.getTime() - start.getTime();
+        
+        if (!isNaN(differenceMs) && differenceMs >= 0) {
+          // Convert to days (include minimum 1 day if dates are same day)
+          const days = Math.max(1, Math.ceil(differenceMs / (1000 * 60 * 60 * 24)));
+          setDurationInDays(days);
+          
+          // Find selected vehicle price
+          const selectedVehicle = VEHICLES_DATA.find(v => v.id === bookingForm.vehicleId);
+          if (selectedVehicle) {
+            let basePrice = selectedVehicle.price * days;
+            // Small extra if with driver
+            if (bookingForm.driverType === 'Avec chauffeur') {
+              basePrice += 10000 * days; // Extra 10,000 FCFA/day for professional drivers in Ouaga
+            }
+            setEstimatedTotalPrice(basePrice);
           }
-          setEstimatedTotalPrice(basePrice);
+        } else {
+          setDurationInDays(0);
+          setEstimatedTotalPrice(0);
         }
       } else {
         setDurationInDays(0);
         setEstimatedTotalPrice(0);
       }
-    } else {
+    } catch (e) {
+      console.error('Error calculating duration and price:', e);
       setDurationInDays(0);
       setEstimatedTotalPrice(0);
     }
@@ -306,56 +337,77 @@ export default function App() {
 
   // Format currency
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+    try {
+      if (typeof price !== 'number' || isNaN(price)) {
+        return '0 FCFA';
+      }
+      return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+    } catch (e) {
+      console.error('Error formatting price:', e);
+      return '0 FCFA';
+    }
   };
 
   // Close mobile menu when hash links are clicked
   useEffect(() => {
-    const handleHashLinkClick = () => {
-      setMobileMenuOpen(false);
-    };
-    
-    const hashLinks = document.querySelectorAll('a[href^="#"]');
-    hashLinks.forEach(link => {
-      link.addEventListener('click', handleHashLinkClick);
-    });
-    
-    return () => {
+    try {
+      const handleHashLinkClick = () => {
+        setMobileMenuOpen(false);
+      };
+      
+      const hashLinks = document.querySelectorAll('a[href^="#"]');
       hashLinks.forEach(link => {
-        link.removeEventListener('click', handleHashLinkClick);
+        link.addEventListener('click', handleHashLinkClick);
       });
-    };
+      
+      return () => {
+        hashLinks.forEach(link => {
+          link.removeEventListener('click', handleHashLinkClick);
+        });
+      };
+    } catch (e) {
+      console.error('Error initializing hash links listeners:', e);
+    }
   }, []);
 
   // Smooth scroll helper with layout shift guard
   const scrollToSection = (id: string) => {
-    setMobileMenuOpen(false);
-    setTimeout(() => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 80); // Small 80ms delay to let mobile menu toggle collapse first, avoiding layout shift
+    try {
+      setMobileMenuOpen(false);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 80); // Small 80ms delay to let mobile menu toggle collapse first, avoiding layout shift
+    } catch (e) {
+      console.error('Error scrolling to section:', e);
+    }
   };
 
   // Action: "Demander ce véhicule"
   const handleRequestVehicle = (vehicleId: string) => {
-    setBookingForm(prev => ({
-      ...prev,
-      vehicleId: vehicleId
-    }));
-    scrollToSection('reservation');
+    try {
+      setBookingForm(prev => ({
+        ...prev,
+        vehicleId: vehicleId
+      }));
+      scrollToSection('reservation');
+    } catch (e) {
+      console.error('Error handling request vehicle:', e);
+    }
   };
 
   // Helper to build WhatsApp booking message URL
   const getWhatsAppBookingUrl = () => {
-    const vehicleName = VEHICLES_DATA.find(v => v.id === bookingForm.vehicleId)?.name || bookingForm.vehicleId;
-    const durDays = durationInDays > 0 ? durationInDays : 0;
-    const estPrice = durationInDays > 0 ? formatPrice(estimatedTotalPrice) : "À définir";
-    const startDateFormatted = startDay && startMonth && startYear ? `${startDay}/${startMonth}/${startYear}` : "À définir";
-    const endDateFormatted = endDay && endMonth && endYear ? `${endDay}/${endMonth}/${endYear}` : "À définir";
+    try {
+      const vehicleName = VEHICLES_DATA.find(v => v.id === bookingForm.vehicleId)?.name || bookingForm.vehicleId;
+      const durDays = durationInDays > 0 ? durationInDays : 0;
+      const estPrice = durationInDays > 0 ? formatPrice(estimatedTotalPrice) : "À définir";
+      const startDateFormatted = startDay && startMonth && startYear ? `${startDay}/${startMonth}/${startYear}` : "À définir";
+      const endDateFormatted = endDay && endMonth && endYear ? `${endDay}/${endMonth}/${endYear}` : "À définir";
 
-    const msgText = `Bonjour ALAS Véhicule 👋
+      const msgText = `Bonjour ALAS Véhicule 👋
 
 Nouvelle demande de location :
 
@@ -370,25 +422,33 @@ Nouvelle demande de location :
 🧑✈️ Type : ${bookingForm.driverType}
 📝 Message : ${bookingForm.message || 'Aucun message particulier'}`;
 
-    return `https://wa.me/22670642294?text=${encodeURIComponent(msgText)}`;
+      return `https://wa.me/22670642294?text=${encodeURIComponent(msgText)}`;
+    } catch (e) {
+      console.error('Error building WhatsApp booking URL:', e);
+      return 'https://wa.me/22670642294';
+    }
   };
 
   // Handle Form Submission
   const handleSubmitBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simple validation
-    if (!bookingForm.fullName || !bookingForm.phone || !bookingForm.startDate || !bookingForm.endDate) {
-      alert("Veuillez remplir les champs de saisie obligatoires (*) s'il vous plaît.");
-      return;
+    try {
+      e.preventDefault();
+      
+      // Simple validation
+      if (!bookingForm.fullName || !bookingForm.phone || !bookingForm.startDate || !bookingForm.endDate) {
+        alert("Veuillez remplir les champs de saisie obligatoires (*) s'il vous plaît.");
+        return;
+      }
+
+      // Trigger Success State
+      setIsSubmitted(true);
+
+      // Open WhatsApp URL automatically
+      const whatsappUrl = getWhatsAppBookingUrl();
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error('Error on form submission:', error);
     }
-
-    // Trigger Success State
-    setIsSubmitted(true);
-
-    // Open WhatsApp URL automatically
-    const whatsappUrl = getWhatsAppBookingUrl();
-    window.open(whatsappUrl, '_blank');
   };
 
   // Filter vehicle data of the catalog
