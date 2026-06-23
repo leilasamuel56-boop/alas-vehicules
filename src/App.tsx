@@ -352,6 +352,8 @@ export default function App() {
     const vehicleName = VEHICLES_DATA.find(v => v.id === bookingForm.vehicleId)?.name || bookingForm.vehicleId;
     const durDays = durationInDays > 0 ? durationInDays : 0;
     const estPrice = durationInDays > 0 ? formatPrice(estimatedTotalPrice) : "À définir";
+    const startDateFormatted = startDay && startMonth && startYear ? `${startDay}/${startMonth}/${startYear}` : "À définir";
+    const endDateFormatted = endDay && endMonth && endYear ? `${endDay}/${endMonth}/${endYear}` : "À définir";
 
     const msgText = `Bonjour ALAS Véhicule 👋
 
@@ -360,10 +362,10 @@ Nouvelle demande de location :
 👤 Nom : ${bookingForm.fullName}
 📞 Téléphone : +226 ${bookingForm.phone}
 🚗 Véhicule souhaité : ${vehicleName}
-📅 Date de départ : ${bookingForm.startDate}
-📅 Date de retour : ${bookingForm.endDate}
+📅 Date de départ : ${startDateFormatted}
+📅 Date de retour : ${endDateFormatted}
 ⏱️ Durée : ${durDays} jour(s)
-💰 Devis estimé : ${estPrice}
+💰 Devis estimé : ${estPrice} FCFA
 📍 Lieu de prise en charge : ${bookingForm.pickupLocation}
 🧑✈️ Type : ${bookingForm.driverType}
 📝 Message : ${bookingForm.message || 'Aucun message particulier'}`;
